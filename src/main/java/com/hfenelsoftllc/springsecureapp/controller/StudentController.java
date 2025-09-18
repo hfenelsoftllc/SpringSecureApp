@@ -4,11 +4,15 @@ package com.hfenelsoftllc.springsecureapp.controller;
 import com.hfenelsoftllc.springsecureapp.exceptions.StudentNotFoundException;
 import com.hfenelsoftllc.springsecureapp.models.Student;
 import com.hfenelsoftllc.springsecureapp.services.StudentService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+//import jakarta.validation.Valid;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -34,12 +38,19 @@ public class StudentController {
         return student;
     }
 
-//    @GetMapping("/students/{name}")
-//    public List<Student> getStudentByName(@PathVariable String name) {
-//        Student student = studentService.findByName(name);
-//        if (student == null) {
-//            throw new StudentNotFoundException("name :" +name);
-//        }
-//        return studentService.findAll();
-//    }
+    @GetMapping("/csrf-token")
+    public CsrfToken getCsrfToken(HttpServletRequest request) {
+        return  (CsrfToken) request.getAttribute("_csrf");
+    }
+
+    @PostMapping("/students")
+    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        Student studentSaved = studentService.Save(student);
+        // implement URI location
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(studentSaved.getId())
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
 }
